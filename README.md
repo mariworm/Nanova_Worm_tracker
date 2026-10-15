@@ -1,4 +1,4 @@
-Nanova worm tracker is a Python-based program, ideological successor of wrMTrck (http://www.phage.dk/plugins/wrmtrck.html).
+Nanova worm tracker is a Python-based program similar to wrMTrck (http://www.phage.dk/plugins/wrmtrck.html).
 
 Currently cannot handle colliding worms! Please only analyze videos where worms stay clear from each other.
 

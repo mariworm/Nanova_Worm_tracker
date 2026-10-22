@@ -75,3 +75,22 @@ Only compare worms recorded on the same day, on the same plate/surface, with the
 
 
 * **Normalized Speeds:** `wrmtrck` utilizes a metric called BLPS (Body Lengths Per Second) which divides the speed by an approximate worm length calculated as `perimeter / 2`. `Nanova-worm-tracker-5.4.py` uses this exact formula for BLPS, and also introduces an Adjusted Max Speed metric, which normalizes the Vmax by that same approximate body length.
+
+
+## Version 6.X
+
+The core mathematical and tracking logic changes in "Nanova-worm-tracker-6.3.py" focus on assignment accuracy, ambiguity filtering, and noise reduction:
+
+* **Predicted-Position Gating:** The tracker now calculates a conservative predicted position by adding half of the last recorded displacement to the current position, gating matches more accurately for persistently moving worms.
+
+
+* **Hybrid Matching Cost:** The cost matrix now includes an area penalty (`D_pred + (lambda_area * area_diff_ratio)`) that weights size differences scaled by half the maximum jump distance, reducing ID swaps when differently sized worms cross paths.
+
+
+* **Merge Detection Flagging:** Detections are automatically flagged as ambiguous if their current area deviates by more than 40% from the track's recent median area, preventing touching worms from corrupting the max speed calculations.
+
+
+* **Noise Floor Filtering:** The kinematics calculation now applies a noise floor threshold (`noise_floor_mm_s`) to filter out stationary centroid jitter, zeroing out speeds below this limit before extracting the maximum and 95th-percentile peak speeds.
+
+
+* **Ambiguity Mask Dilation:** The script dilates the ambiguity mask to cover the entire 5-point smoothing window (a radius of 2 frames), preventing contaminated neighboring steps from leaking into valid speed metrics.

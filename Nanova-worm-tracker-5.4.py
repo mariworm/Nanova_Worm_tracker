@@ -505,13 +505,25 @@ class WormTrackerApp:
         self.test_output = tk.Text(left_panel, height=8, width=40, font=('Consolas', 8))
         self.test_output.pack(fill="x", pady=5)
         
-        self.lbl_preview = ttk.Label(self.tab_tune, text="Load a video to preview...", anchor="n")
-        self.lbl_preview.pack(side="right", fill="both", expand=True, anchor="n", padx=10, pady=10)
+        # Right panel for Video Title and Preview Image
+        right_panel = ttk.Frame(self.tab_tune)
+        right_panel.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+        
+        # Label to display the video filename
+        self.lbl_video_title = ttk.Label(right_panel, text="No video loaded", font=('Arial', 10, 'bold'), anchor="center", wraplength=700)
+        self.lbl_video_title.pack(side="top", fill="x", pady=(0, 5))
+        
+        # Preview Image Label
+        self.lbl_preview = ttk.Label(right_panel, text="Load a video to preview...", anchor="n")
+        self.lbl_preview.pack(side="top", fill="both", expand=True, anchor="n")
 
     def load_test_video(self):
         filepath = filedialog.askopenfilename(filetypes=[("AVI files", "*.avi")])
         if not filepath: return
         self.tune_video_path = filepath
+        
+        # Display the full file path above the preview
+        self.lbl_video_title.config(text=f"Video: {filepath}")
         
         if self.tune_cap: self.tune_cap.release()
         self.tune_cap = cv2.VideoCapture(filepath)
@@ -521,13 +533,14 @@ class WormTrackerApp:
         self.slider_frame.config(to=max_f)
         self.slider_frame.set(total_frames // 2)
         
-        # Configure Start and End frame sliders
-        self.slider_start_frame.config(to=max_f)
-        self.slider_start_frame.set(0)
-        
-        self.slider_end_frame.config(to=max_f)
-        self.slider_end_frame.set(max_f)
-        
+        if hasattr(self, 'slider_start_frame'):
+            self.slider_start_frame.config(to=max_f)
+            self.slider_start_frame.set(0)
+            
+        if hasattr(self, 'slider_end_frame'):
+            self.slider_end_frame.config(to=max_f)
+            self.slider_end_frame.set(max_f)
+            
         self.update_preview()
 
     def update_preview(self, event=None):

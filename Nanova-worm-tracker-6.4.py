@@ -273,8 +273,8 @@ class WormTrackerApp:
         self.px_per_mm = 1.0
         self.params = {
             'thresh': 100, 'min_a': 100, 'max_a': 1000, 'min_c': 0.05, 'max_c': 0.50, 
-            'do_bg_sub': True, 'bg_radius': 50, 'max_jump_mm': 0.3,
-            'noise_floor_mm_s': 0.08, 'max_gap_s': 0.4, 'fps': 25.0, 'min_track': 30
+            'do_bg_sub': True, 'bg_radius': 50, 'max_jump_mm': 0.1,
+            'noise_floor_mm_s': 0.04, 'max_gap_s': 0.2, 'fps': 25.0, 'min_track': 30
         }
         
         self.notebook = ttk.Notebook(root)
@@ -353,13 +353,20 @@ class WormTrackerApp:
         self.calib_img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         self.calib_orig_h, self.calib_orig_w = self.calib_img_rgb.shape[:2]
         
-        max_width = 1000
-        if self.calib_orig_w > max_width:
-            self.calib_zoom = max_width / self.calib_orig_w
+        # Dynamically grab the actual canvas width (fallback to 1000 if not fully rendered yet)
+        canvas_w = max(self.calib_canvas.winfo_width(), 1000)
+        
+        # Reset zoom to fit within the canvas width
+        if self.calib_orig_w > canvas_w:
+            self.calib_zoom = canvas_w / self.calib_orig_w
         else:
             self.calib_zoom = 1.0
             
         self.redraw_calib_image()
+        
+        # Reset scrollbars to the top-left after a new image loads
+        self.calib_canvas.xview_moveto(0)
+        self.calib_canvas.yview_moveto(0)
 
     def on_zoom(self, event):
         if self.calib_img_rgb is None: return
@@ -401,13 +408,24 @@ class WormTrackerApp:
             self.calib_canvas.yview_moveto(new_view_y / total_h)
 
     def redraw_calib_image(self):
-        if self.draw_line: self.calib_canvas.delete(self.draw_line)
+        self.calib_canvas.delete("all")  # Clear everything (including old images) before redrawing
+        
         new_w = int(self.calib_orig_w * self.calib_zoom)
         new_h = int(self.calib_orig_h * self.calib_zoom)
         resized = cv2.resize(self.calib_img_rgb, (new_w, new_h))
         
         self.calib_photo = ImageTk.PhotoImage(image=Image.fromarray(resized))
-        self.calib_canvas.create_image(0, 0, image=self.calib_photo, anchor="nw")
+        
+        # Get current visible canvas dimensions (fallback to 1 if it hasn't rendered yet)
+        c_w = max(self.calib_canvas.winfo_width(), 1)
+        c_h = max(self.calib_canvas.winfo_height(), 1)
+        
+        # Calculate dynamic center coordinates
+        center_x = max(new_w, c_w) // 2
+        center_y = max(new_h, c_h) // 2
+        
+        # Draw the image anchored by its center
+        self.calib_canvas.create_image(center_x, center_y, image=self.calib_photo, anchor="center")
         self.calib_canvas.config(scrollregion=self.calib_canvas.bbox("all"))
 
     def on_draw_start(self, event):
